@@ -146,14 +146,14 @@ int interpret::Analyze(std::string word){
 	std::string num = word.substr (1,1 - word.length());
 	switch (a)
 	{
-		case'N': 	{int Num= std::stoi(num, nullptr);
+		case'N': 	{int Num= stoi(num, nullptr);
 		Actual_Line_Number = Num;
 #if DEBUG
 							std::cout << "Line Number:" <<  Num << std::endl;
 #endif
 							break;}
 		case'G':{
-				int Num= std::stoi(num, nullptr);
+			int Num= std::stoi(num, nullptr);
 				switch (Num){
 					case 0:
 						Movement_type = 0;
