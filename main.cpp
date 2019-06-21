@@ -25,7 +25,7 @@ void plotter_move(unsigned int move){
 	cs = 0;     //pull SPi low to initiate communication
 
     //SPI adressing
-	led2.write(1);
+	//led2.write(1);
 	spi.write(0x40); //device optcode  //bit0 -> 0 write/1 read             //0100 0000
 	spi.write(0x09); //adress of register (GPIO port register 0x09)         //0000 1001
 	spi.write(move); //data to write to register                            //0000 0000
@@ -170,7 +170,7 @@ void endstop_counter(void){
 		}
 		plotter_move(buffer);
 		counter++;
-		uart.printf("counter is: %d\n", counter);
+		//uart.write("counter is: %d\n", counter);
 
 	}
 	//device.printf("counter is: %d\n", counter);
@@ -179,13 +179,9 @@ void endstop_counter(void){
 /*Thread Endstops end*/
 
 
-void sendmsg(string msg){
-		uart.printf("%s\n", msg);
-}
-
 //THREADS
-Thread *Thread_com;
-Thread *Thread_int;
+Thread Thread_com;
+Thread Thread_int;
 
 //INTERPRETER THREAD
 void int_Thread(){
@@ -194,7 +190,7 @@ void int_Thread(){
 	bool msgq_empty;
 	osEvent in_message;
 
-	uart.printf("COM-THREAD\n");
+	//uart.printf("COM-THREAD\n");
 
 	while(1){
 		msgq_empty = com_msgqueue.empty();
@@ -202,7 +198,7 @@ void int_Thread(){
 			led1.write(0);
 			in_message = com_msgqueue.get();
 			//incoming_msg = in_message.value;
-			uart.printf("int_thread: %s\n", in_message.value);
+			//uart.printf("int_thread: %s\n", in_message.value);
 		}
 	}
 	
@@ -230,53 +226,28 @@ void int_Thread(){
 
 //COMMUNICATION THREAD
 void com_Thread(){
-    char char_rec;
+    unsigned char char_rec;
     int counter1 = 0;
     int direction = 0x00;
 	std::string message;
 	std::string *pMsg = &message;
+	char msg_array[6] = '\0';
 
-	uart.printf("COM-THREAD\n");
-	while(1){
-    //check if a char has been received
+	//uart.printf("COM-THREAD\n");
+	while(1){	
 		if(uart.readable()){
 			char_rec = uart.getc();
-			//uart.printf("%c", char_rec);
-
-			if((char_rec == '#') || (counter1 > 49)){
-				counter1 = 0;
-
-			} else if (char_rec == '$'){
-				uart.printf("%s", message.c_str());
-				//rtos Queue.h
-				//osStatus put(T* data, uint32_t millisec=0, uint8_t prio=0)
-				//com_msgqueue.put(pMsg, 0, 0);
-				message = "";
-				counter1 = 0;
-
-			} else {
-				if(wasd_enabled){
-					switch(char_rec){
-					case 'w':
-						direction = up;
-						break;
-					case 'a':
-						direction = left;
-						break;
-					case 's':
-						direction = down;
-						break;
-					case 'd':
-						direction = right;
-						break;
-					}
-					plotter_line(WASD_STEPS, direction);
-				}
-				message += char_rec;
-				//uart.printf("%c\n", char_rec);
-				counter1++;
+			//uart.putc(char_rec);
+			msg_array[counter1] = char_rec;
+			for(int i = 0; i < 6; i++){
+				uart.putc(msg_array[i]);
 			}
+			//uart.putc(counter1);
+			//uart.printf("counter: %d\n", counter1);
+			counter1++;
 		}
+		if(counter1 >= 5)
+			counter1 = 0;
 	}
 }
 //COMMUNICATION THREAD END
@@ -292,15 +263,17 @@ int main(void){
 
 	spi_init();
 
-	uart.printf("Main-Start\n");
+	//uart.write("Main-Start\n");
 	
-
+	/*
 	//start com_Thread and check if it worked
 	status = Thread_com->start(com_Thread);
 	if (status != osOK)
 	{
 		error("ERROR: Thread buttons: Failed!");
 	}
+	*/
+	Thread_com.start(com_Thread);
 
 
 	while(1){

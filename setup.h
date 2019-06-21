@@ -44,7 +44,7 @@ DigitalOut cs(P1_2);    		//IO_cs
 
 //init serial
 //mbed os - drivers - serial.h
-Serial uart(P0_1, P0_0, 9600);   //rdx, tdx, baudrate
+Serial uart(P0_1, P0_0,9600);   //rdx, tdx, baudrate
 
 //targets/TARGET_Infineon/TARGET_XMC4XXX/TARGET_XMC4500/PinNames.h
 DigitalIn button1(SW1);		//P1_14
