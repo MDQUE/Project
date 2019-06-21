@@ -7,10 +7,8 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-//#include <stdlib.h>
 #include <cmath>
 #include <queue>
-//#include <pthread.h>
 
 //own includes
 #include <gcode.h>
@@ -26,6 +24,7 @@
 #define RUN 1
 #define SPEED 200	//speed of the plotter
 #define WASD_STEPS	1000	//set steps for wasd-control
+#define MSQSIZE 10
 
 #define right	0x0C
 #define left	0x08
@@ -59,14 +58,18 @@ DigitalIn endstop_down(P1_13);    //endstop 2
 DigitalIn endstop_right(P1_12);   //endstop 3
 DigitalIn endstop_left(P1_14);    //endstop 4
 
+//msgqueue
+Queue <string, MSQSIZE>  com_msgqueue;
+
 //function declarations;
-void plotter_move(unsigned int move);
+
 void spi_init(void);
 void endstop_counter(void);
 void sendmsg(string msg);
 void int_Thread();
 void com_Thread();
 void plotter_reset();
+void plotter_move(unsigned int move);
 void plotter_line(int steps, int direction);
 void plotter_diagnal(int x_steps, int x_dir, int y_steps, int y_dir);
 
