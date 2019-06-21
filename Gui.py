@@ -29,7 +29,23 @@ class MyWindow(Gtk.Window):
 		grid = Gtk.Grid()
 		self.add(grid)
 		
+		Treeview_placeholder = Gtk.Box(spacing = 3)
+		listbox = Gtk.ListBox()
+		listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+		Codeprocess_placeholder = Gtk.Box(spacing = 3)
+		Answer_placeholder = Gtk.Box(spacing = 3)
 		
+		grid.attach(Treeview_placeholder, 0, 0, 2, 2)
+		grid.attach(listbox, 2, 0 , 1, 1)
+		grid.attach(Codeprocess_placeholder, 0, 2, 2, 1 )
+		grid.attach(Answer_placeholder, 2, 1, 2, 2)
+		
+		row = Gtk.ListBoxRow()
+		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=50)
+		row.add(hbox)
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+		hbox.pack_start(vbox, True, True, 0)
+
 		
 #		self.button1 = Gtk.Button(label="Hello")
 #		self.button1.connect("clicked", self.on_button1_clicked)
@@ -38,13 +54,13 @@ class MyWindow(Gtk.Window):
 #		self.button2 = Gtk.Button(label="Goodbye")
 #		self.button2.connect("clicked", self.on_button2_clicked)
 #		self.box.pack_start(self.button2, True, True, 0)
-		
-	def on_button1_clicked(self, widget):
-		print("Hello")
-		self.button1.set_label("nello")
-	
-	def on_button2_clicked(self, widget):
-		print("Goodbye")
+#		
+#	def on_button1_clicked(self, widget):
+#		print("Hello")
+#		self.button1.set_label("nello")
+#	
+#	def on_button2_clicked(self, widget):
+#		print("Goodbye")
 		
 	def Setup_dialog(self,widget):
 		print("Setup mode entered")
