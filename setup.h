@@ -15,7 +15,10 @@
 #include <ginterpret.h>
 
 //#include <comthread.h>
-
+#define Endstop1 endstop_up
+#define Endstop2 endstop_down
+#define Endstop3 endstop_right
+#define Endstop4 endstop_left
 
 //#include <Stepper.h>
 /************************************************/
@@ -58,10 +61,10 @@ DigitalOut led1(LED1);      //P1_1
 DigitalOut led2(LED2);      //P1_0
 
 //endstops
-DigitalIn endstop_up(P1_15);      //endstop 1
-DigitalIn endstop_down(P1_13);    //endstop 2
-DigitalIn endstop_right(P1_12);   //endstop 3
-DigitalIn endstop_left(P1_14);    //endstop 4
+InterruptIn endstop_up(P1_15);      //endstop 1
+InterruptIn endstop_down(P1_13);    //endstop 2
+InterruptIn endstop_right(P1_12);   //endstop 3
+InterruptIn endstop_left(P1_14);    //endstop 4
 
 //msgqueue
 Queue <string, MSQSIZE>  com_msgqueue;
@@ -70,8 +73,8 @@ Queue <string, MSQSIZE>  com_msgqueue;
 EventFlags Endstops;
 
 
-MemoryPool<msgpointer, 32> mpool;
-Queue<msgpointer, 32> queue;
+MemoryPool <msgpointer, 16> mpool;
+Queue <msgpointer, 16> msg_queue;
 
 //function declarations;
 

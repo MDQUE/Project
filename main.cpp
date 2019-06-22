@@ -253,7 +253,7 @@ void com_Thread(){
 						last_msg = message;
 						msgpointer *dudewtf = mpool.alloc();
 						dudewtf->msg_pointer = &last_msg;
-						queue.put(dudewtf);
+						msg_queue.put(dudewtf);
 						message = "";
 						break;
 					}
@@ -281,11 +281,11 @@ void com_Thread(){
 //		Prefix 3: message to booth
 void Message_handout_thread(void){
 	while (1){
-	osEvent evt = queue.get();
+	osEvent evt = msg_queue.get();
         if (evt.status == osEventMessage) {
-            msgpointer *message = (msgpointer*)evt.value.p;
-            std::string chars = message->*msg_pointer;
-            mpool.free(message);
+            msgpointer *msg = (msgpointer*)evt.value.p;
+            std::string *chars = msg->msg_pointer;
+            mpool.free(msg);
         }
 	}
 	
