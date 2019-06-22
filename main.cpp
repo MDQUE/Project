@@ -182,6 +182,7 @@ void endstop_counter(void){
 //THREADS
 Thread Thread_com;
 Thread Thread_int;
+Thread Message_handout;
 
 //INTERPRETER THREAD
 void int_Thread(){
@@ -195,7 +196,7 @@ void int_Thread(){
 	while(1){
 		msgq_empty = com_msgqueue.empty();
 		if(!msgq_empty){
-			led1.write(0);
+			led1.write(!led1);
 			in_message = com_msgqueue.get();
 			//incoming_msg = in_message.value;
 			//uart.printf("int_thread: %s\n", in_message.value);
@@ -224,34 +225,72 @@ void int_Thread(){
 	*/
 }
 
+
+
 //COMMUNICATION THREAD
 void com_Thread(){
-    unsigned char char_rec;
-    int counter1 = 0;
-    int direction = 0x00;
-	std::string message;
-	std::string *pMsg = &message;
-	char msg_array[6] = '\0';
+  char char_rec;
+//    int counter1 = 0;
+//    int direction = 0x00;
+	std::string message = "";
+	std::string last_msg = "";
+//	std::string *pMsg = &message;
+//	char msg_array[6] = '\0';
 
 	//uart.printf("COM-THREAD\n");
 	while(1){	
 		if(uart.readable()){
 			char_rec = uart.getc();
-			//uart.putc(char_rec);
-			msg_array[counter1] = char_rec;
-			for(int i = 0; i < 6; i++){
-				uart.putc(msg_array[i]);
+			if (char_rec == '$'){
+				while (1){
+					if(uart.readable()){
+					char_rec = uart.getc();
+					message += char_rec;
+					}
+					if (char_rec == '#'){
+						uart.printf("%s\n", message.c_str());
+						uart.printf("1:ACK");
+						last_msg = message;
+						msgpointer *dudewtf = mpool.alloc();
+						dudewtf->msg_pointer = &last_msg;
+						queue.put(dudewtf);
+						message = "";
+						break;
+					}
+				}
 			}
-			//uart.putc(counter1);
-			//uart.printf("counter: %d\n", counter1);
-			counter1++;
-		}
-		if(counter1 >= 5)
-			counter1 = 0;
+					
+//			//uart.putc(char_rec);
+//			message += char_rec;
+//			for(int i = 0; i < 6; i++)
+//			//uart.putc(counter1);
+//			//uart.printf("counter: %d\n", counter1);
+//			counter1++;
+//		}
+//		if(counter1 >= 5)
+//			counter1 = 0;
 	}
+}
 }
 //COMMUNICATION THREAD END
 
+
+//Message Handout Thread (1 hot)
+//		Prefix 1: message to Interpreter
+//		Prefix 2: message to plotter
+//		Prefix 3: message to booth
+void Message_handout_thread(void){
+	while (1){
+	osEvent evt = queue.get();
+        if (evt.status == osEventMessage) {
+            msgpointer *message = (msgpointer*)evt.value.p;
+            std::string chars = message->*msg_pointer;
+            mpool.free(message);
+        }
+	}
+	
+}
+	
 
 
 int main(void){
@@ -262,7 +301,16 @@ int main(void){
 	pwm_signal.write(1.0);  //default duty cicle
 
 	spi_init();
+	Endstop1.rise(&Endstop1_reached);
+	Endstop1.fall(&Endstop1_left);
+	Endstop2.rise(&Endstop2_reached);
+	Endstop2.fall(&Endstop2_left);
+	Endstop3.rise(&Endstop3_reached);
+	Endstop3.fall(&Endstop3_left);
+	Endstop4.rise(&Endstop4_reached);
+	Endstop4.fall(&Endstop4_left);
 
+	
 	//uart.write("Main-Start\n");
 	
 	/*
@@ -274,6 +322,9 @@ int main(void){
 	}
 	*/
 	Thread_com.start(com_Thread);
+	Thread_com.set_priority(osPriorityRealtime);
+	
+	Message_handout.start(Message_handout_thread);
 
 
 	while(1){

@@ -32,6 +32,11 @@
 #define up	    0x02
 /******************************************************************** init pins**************************************** */
 
+//structs
+typedef struct {
+	std::string* msg_pointer;
+} msgpointer;
+
 //Create a PwmOut connected to the specified pin
 //mbed_os - drivers PwmOut
 PwmOut pwm_signal(P1_3);   // CCU4 P1.3    //CCU8 P0.3
@@ -61,6 +66,13 @@ DigitalIn endstop_left(P1_14);    //endstop 4
 //msgqueue
 Queue <string, MSQSIZE>  com_msgqueue;
 
+//Event Flags
+EventFlags Endstops;
+
+
+MemoryPool<msgpointer, 32> mpool;
+Queue<msgpointer, 32> queue;
+
 //function declarations;
 
 void spi_init(void);
@@ -72,10 +84,21 @@ void plotter_reset();
 void plotter_move(unsigned int move);
 void plotter_line(int steps, int direction);
 void plotter_diagnal(int x_steps, int x_dir, int y_steps, int y_dir);
+void Endstop1_reached(void);
+void Endstop2_reached(void);
+void Endstop3_reached(void);
+void Endstop4_reached(void);
+void Endstop1_left(void);
+void Endstop2_left(void);
+void Endstop3_left(void);
+void Endstop4_left(void);
+
 
 
 //variables
 int counter = 0;
 bool wasd_enabled = true;	//set if wasd-control is enabled
+
+
 
 #endif
