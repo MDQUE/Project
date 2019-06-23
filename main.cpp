@@ -8,7 +8,7 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,s
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -17,55 +17,74 @@
 /******************comments
 */
 /******************************************************************* Includes */
-//#include "mbed.h"
-//#include "rtos.h"
-//#include <string>
-//#include <cstring>
-//#include <iostream>
-//#include <stdlib.h>
-//#include <cmath>
-//#include <queue>
 #include "setup.h"
-//#include <pthread.h>
-//#include "msgqueue_func.h"
-//#include "comthread.h"
 
+/************************************PLOTTER-FUNCTIONS************************************/
+//plotter functions: move, reset, line, diagnal
+void plotter_move(unsigned int move){
+	cs = 0;     //pull SPi low to initiate communication
 
-//THREADS
-Thread *Thread_com;
+    //SPI adressing
+	//led2.write(1);
+	spi.write(0x40); //device optcode  //bit0 -> 0 write/1 read             //0100 0000
+	spi.write(0x09); //adress of register (GPIO port register 0x09)         //0000 1001
+	spi.write(move); //data to write to register                            //0000 0000
 
+	cs = 1;     	//set SPI bus high for no communication
+	wait_us(SPEED);	//speed of the plotter
+	cs = 0;    		 //pull SPI low to initiate comm
 
-//MESSAGE QUES
-//pthread_mutex_t msgmutex = PTHREAD_MUTEX_INITIALIZER;
-//queue<string> msgq_com_int;
+    //after step, reset GPIO register
+	spi.write(0x40);
+	spi.write(0x09);
+	spi.write(0x00);
 
-////QUEUE_FUNCTIONS
-//void msgtransmitter(string gcode_line);
+	cs = 1;     //set SPI high for no communication
+}
 
-//		pthread_mutex_lock(&msgmutex);
-//		msgq.push(gcode_line); // push message onto the queue
-//		pthread_mutex_unlock(&msgmutex);
-//} // msgtransmitter()
+void plotter_reset(){
+    //reset plotter to 0,0 (left,down)
+    //move to left position
 
-//string msgreceiver(){
-//	long qsize;
-//	string msg;
+	//is 0 or 1 endstop active???
 
-//	while(true){
-////		if(msgq.empty()){
-////		//sleep(10000); // sleep 0.01 sec before trying again
-////		continue;
-////		}
+    while(!endstop_down){
+        plotter_move(left);
+    }
+    //move to down position
+    while(!endstop_left){
+        plotter_move(down);
+    }
+}
 
-//		// we end up here because there was something in the msg queue
-//		pthread_mutex_lock(&msgmutex);
-//		msg = msgq.front(); // get next message in queue
-//		msgq.pop(); // remove it from the queue
-//		pthread_mutex_unlock(&msgmutex);
-//	}
-//	return msg;
-//} // msgreceiver()
+void plotter_line(int steps, int direction){
 
+	for(int i = 0; i < steps; i++){
+		plotter_move(direction); 	//direction is: 0x03 | 0x04 | 0x08 | 0x0C
+	}
+}
+
+void plotter_diagnal (int x_steps, int x_dir, int y_steps, int y_dir){
+	int last_steps = 0;
+	int total_steps = 0;
+	int actual_steps = 0;
+	int th;
+	int bound;
+
+	if(x_steps > y_steps){
+		th = x_steps / y_steps;
+		bound = y_steps;
+	} else {
+		th = x_steps / y_steps;
+		bound = x_steps;
+	}
+
+	for (int i = 1; i <= bound; i++){
+		total_steps = (int)ceil(i * th);
+		actual_steps = total_steps - last_steps;
+		last_steps = total_steps;
+	}
+}
 
 
 //spi init
@@ -151,7 +170,7 @@ void endstop_counter(void){
 		}
 		plotter_move(buffer);
 		counter++;
-		uart.printf("counter is: %d\n", counter);
+		//uart.write("counter is: %d\n", counter);
 
 	}
 	//device.printf("counter is: %d\n", counter);
@@ -160,15 +179,31 @@ void endstop_counter(void){
 /*Thread Endstops end*/
 
 
-void sendmsg(string msg){
-		uart.printf("%s\n", msg);
-}
-
-
+//THREADS
+Thread Thread_com;
+Thread Thread_int;
+Thread Message_handout;
 
 //INTERPRETER THREAD
 void int_Thread(){
 
+	std::string incoming_msg = "";
+	bool msgq_empty;
+	osEvent in_message;
+
+	//uart.printf("COM-THREAD\n");
+
+	while(1){
+		msgq_empty = com_msgqueue.empty();
+		if(!msgq_empty){
+			led1.write(!led1);
+			in_message = com_msgqueue.get();
+			//incoming_msg = in_message.value;
+			//uart.printf("int_thread: %s\n", in_message.value);
+		}
+	}
+	
+	/*
 	while(1){
 
 
@@ -187,153 +222,75 @@ void int_Thread(){
 	// Get Some info;
 	//std::cout << Code.MyInstructions[0].get_StepsX() << std::endl;
 	}
+	*/
 }
+
+
 
 //COMMUNICATION THREAD
 void com_Thread(){
-    char char_rec;
-    int counter1 = 0;
-    int direction = 0x00;
-	std::string message;
+  char char_rec;
+//    int counter1 = 0;
+//    int direction = 0x00;
+	std::string message = "";
+	std::string last_msg = "";
+//	std::string *pMsg = &message;
+//	char msg_array[6] = '\0';
 
-	while(1){
-    //check if a char has been received
+	//uart.printf("COM-THREAD\n");
+	while(1){	
 		if(uart.readable()){
 			char_rec = uart.getc();
-			//uart.printf("%c", char_rec);
-
-			if((char_rec == '#') || (counter1 > 49)){
-				counter1 = 0;
-
-			} else if (char_rec == '$'){
-				uart.printf("%s", message.c_str());
-//				msgtransmitter(message);
-				message = "";
-				counter1 = 0;
-
-			} else {
-				if(wasd_enabled){
-					switch(char_rec){
-					case 'w':
-						direction = up;
-						break;
-					case 'a':
-						direction = left;
-						break;
-					case 's':
-						direction = down;
-						break;
-					case 'd':
-						direction = right;
+			if (char_rec == '$'){
+				while (1){
+					if(uart.readable()){
+					char_rec = uart.getc();
+					message += char_rec;
+					}
+					if (char_rec == '#'){
+						uart.printf("%s\n", message.c_str());
+						uart.printf("1:ACK");
+						last_msg = message;
+						msgpointer *dudewtf = mpool.alloc();
+						dudewtf->msg_pointer = &last_msg;
+						msg_queue.put(dudewtf);
+						message = "";
 						break;
 					}
-					plotter_line(WASD_STEPS, direction);
 				}
-				message += char_rec;
-				//uart.printf("%c\n", char_rec);
-				counter1++;
 			}
-		}
+					
+//			//uart.putc(char_rec);
+//			message += char_rec;
+//			for(int i = 0; i < 6; i++)
+//			//uart.putc(counter1);
+//			//uart.printf("counter: %d\n", counter1);
+//			counter1++;
+//		}
+//		if(counter1 >= 5)
+//			counter1 = 0;
 	}
+}
 }
 //COMMUNICATION THREAD END
 
 
-
-////QUEUE_FUNCTIONS
-//void msgtransmitter(string gcode_line){
-
-//		pthread_mutex_lock(&msgmutex);
-//		msgq.push(gcode_line); // push message onto the queue
-//		pthread_mutex_unlock(&msgmutex);
-//} // msgtransmitter()
-
-//string msgreceiver(){
-//	long qsize;
-//	string msg;
-
-//	while(true){
-//		if(msgq.empty()){
-//		//usleep(10000); // sleep 0.01 sec before trying again		//waiting?
-//		continue;
-//		}
-
-//		// we end up here because there was something in the msg queue
-//		pthread_mutex_lock(&msgmutex);
-//		msg = msgq.front(); // get next message in queue
-//		msgq.pop(); // remove it from the queue
-//		pthread_mutex_unlock(&msgmutex);
-//	}
-//	return msg;
-//} // msgreceiver()
-
-
-/************************************FUNCTIONS************************************/
-//plotter functions: move, reset, line, diagnal
-void plotter_move(unsigned int move){
-	cs = 0;     //pull SPi low to initiate communication
-
-    //SPI adressing
-	led2.write(1);
-	spi.write(0x40); //device optcode  //bit0 -> 0 write/1 read             //0100 0000
-	spi.write(0x09); //adress of register (GPIO port register 0x09)         //0000 1001
-	spi.write(move); //data to write to register                            //0000 0000
-
-	cs = 1;     	//set SPI bus high for no communication
-	wait_us(SPEED);	//speed of the plotter
-	cs = 0;    		 //pull SPI low to initiate comm
-
-    //after step, reset GPIO register
-	spi.write(0x40);
-	spi.write(0x09);
-	spi.write(0x00);
-
-	cs = 1;     //set SPI high for no communication
-}
-
-void plotter_reset(){
-    //reset plotter to 0,0 (left,down)
-    //move to left position
-
-	//is 0 or 1 endstop active???
-
-    while(!endstop_down){
-        plotter_move(left);
-    }
-    //move to down position
-    while(!endstop_left){
-        plotter_move(down);
-    }
-}
-
-void plotter_line(int steps, int direction){
-
-	for(int i = 0; i < steps; i++){
-		plotter_move(direction); 	//direction is: 0x03 | 0x04 | 0x08 | 0x0C
+//Message Handout Thread (1 hot)
+//		Prefix 1: message to Interpreter
+//		Prefix 2: message to plotter
+//		Prefix 3: message to booth
+void Message_handout_thread(void){
+	while (1){
+	osEvent evt = msg_queue.get();
+        if (evt.status == osEventMessage) {
+            msgpointer *msg = (msgpointer*)evt.value.p;
+            std::string *chars = msg->msg_pointer;
+            mpool.free(msg);
+        }
 	}
+	
 }
-
-void plotter_diagnal (int x_steps, int x_dir, int y_steps, int y_dir){
-	int last_steps = 0;
-	int total_steps = 0;
-	int actual_steps = 0;
-	int th;
-	int bound;
-
-	if(x_steps > y_steps){
-		th = x_steps / y_steps;
-		bound = y_steps;
-	} else {
-		th = x_steps / y_steps;
-		bound = x_steps;
-	}
-
-	for (int i = 1; i <= bound; i++){
-		total_steps = (int)ceil(i * th);
-		actual_steps = total_steps - last_steps;
-		last_steps = total_steps;
-	}
-}
+	
 
 
 int main(void){
@@ -344,21 +301,35 @@ int main(void){
 	pwm_signal.write(1.0);  //default duty cicle
 
 	spi_init();
+	Endstop1.rise(&Endstop1_reached);
+	Endstop1.fall(&Endstop1_left);
+	Endstop2.rise(&Endstop2_reached);
+	Endstop2.fall(&Endstop2_left);
+	Endstop3.rise(&Endstop3_reached);
+	Endstop3.fall(&Endstop3_left);
+	Endstop4.rise(&Endstop4_reached);
+	Endstop4.fall(&Endstop4_left);
 
-
-	uart.printf("Main-Start\n");
-
+	
+	//uart.write("Main-Start\n");
+	
+	/*
 	//start com_Thread and check if it worked
 	status = Thread_com->start(com_Thread);
 	if (status != osOK)
 	{
 		error("ERROR: Thread buttons: Failed!");
 	}
+	*/
+	Thread_com.start(com_Thread);
+	Thread_com.set_priority(osPriorityRealtime);
+	
+	Message_handout.start(Message_handout_thread);
 
 
 	while(1){
-		//nothing
+		led1 = !led1;
 	}
- return 1;
+	return 0;
 }
 /*! EOF */
