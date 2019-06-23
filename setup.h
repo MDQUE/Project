@@ -29,10 +29,10 @@
 #define WASD_STEPS	1000	//set steps for wasd-control
 #define MSQSIZE 10
 
-#define right	0x0C
-#define left	0x08
-#define down	0x03
-#define up	    0x02
+#define right	0x0C	//12
+#define left	0x08	//8
+#define down	0x03	//3
+#define up	    0x02	//2
 /******************************************************************** init pins**************************************** */
 
 //structs
@@ -84,7 +84,8 @@ void sendmsg(string msg);
 void int_Thread();
 void com_Thread();
 void plotter_reset();
-void plotter_move(unsigned int move);
+void plotter_move(char direction);
+void plotter_single_move(char direction);
 void plotter_line(int steps, int direction);
 void plotter_diagnal(int x_steps, int x_dir, int y_steps, int y_dir);
 void Endstop1_reached(void);
@@ -95,6 +96,8 @@ void Endstop1_left(void);
 void Endstop2_left(void);
 void Endstop3_left(void);
 void Endstop4_left(void);
+void Move_enable(void);
+void Move_disable(void);
 
 
 

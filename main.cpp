@@ -20,15 +20,46 @@
 #include "setup.h"
 
 /************************************PLOTTER-FUNCTIONS************************************/
-//plotter functions: move, reset, line, diagnal
-void plotter_move(unsigned int move){
+//plotter functions: move, single_move, reset, line, diagnal
+void plotter_move(char direction){
+
+	uint32_t endstop_flags = Endstops.get();
+
+	//if move is enabled
+	if((0x05 & endstop_flags) == 0x05){
+
+		//up 0x02 endstop 1
+		if( ((direction & 0x02) == 0x02) && ((0x00000001 & endstop_flags) != 0x01) ){
+			plotter_single_move(up);
+		}
+
+		//down 0x03 endstop 2
+		if( ((direction & 0x03) == 0x03) && ((0x00000002 & endstop_flags) != 0x02) ){
+			plotter_single_move(down);
+		}
+
+		//left 0x08 endstop 4
+		if( ((direction & 0x08) == 0x08) && ((0x00000004 & endstop_flags) != 0x04) ){
+			plotter_single_move(right);
+		}
+
+		//right 0x0C endstop 3
+		if( ((direction & 0x0C) == 0x0C) && ((0x00000003 & endstop_flags) != 0x03) ){
+			plotter_single_move(left);
+		}
+
+	}
+		
+}
+void plotter_signle_move(char direction){
+
 	cs = 0;     //pull SPi low to initiate communication
 
     //SPI adressing
 	//led2.write(1);
 	spi.write(0x40); //device optcode  //bit0 -> 0 write/1 read             //0100 0000
 	spi.write(0x09); //adress of register (GPIO port register 0x09)         //0000 1001
-	spi.write(move); //data to write to register                            //0000 0000
+	spi.write(direction); //data to write to register                            //0000 0000
 
 	cs = 1;     	//set SPI bus high for no communication
 	wait_us(SPEED);	//speed of the plotter
@@ -45,19 +76,19 @@ void plotter_move(unsigned int move){
 void plotter_reset(){
     //reset plotter to 0,0 (left,down)
     //move to left position
+	uint32_t endstop_flags = Endstops.get();
 
-	//is 0 or 1 endstop active???
+	while( (0x00000002 & endstop_flags) != 0x2){
+		plotter_signle_move(down);
+	}
+	while( (0x00000004 & endstop_flags) != 0x4){
+		plotter_signle_move(left);
+	}
 
-    while(!endstop_down){
-        plotter_move(left);
-    }
-    //move to down position
-    while(!endstop_left){
-        plotter_move(down);
-    }
+
 }
 
-void plotter_line(int steps, int direction){
+void plotter_line(int steps, char direction){
 
 	for(int i = 0; i < steps; i++){
 		plotter_move(direction); 	//direction is: 0x03 | 0x04 | 0x08 | 0x0C
@@ -301,6 +332,8 @@ int main(void){
 	pwm_signal.write(1.0);  //default duty cicle
 
 	spi_init();
+
+	//what?
 	Endstop1.rise(&Endstop1_reached);
 	Endstop1.fall(&Endstop1_left);
 	Endstop2.rise(&Endstop2_reached);
