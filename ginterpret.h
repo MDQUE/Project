@@ -50,6 +50,8 @@ public:
 		void Next_Instruction();
 		
 		std::vector<gcode> MyInstructions;
+		 
+		
 		
 		// ################################## Accessor Functions #########################################
 		
@@ -77,8 +79,8 @@ private:
 		 
 		 int Actual_Line_Number;
 		 bool Program_End = 0;
-		 float MoveX;
-		 float MoveY;
+		 float MoveX = 0;
+		 float MoveY = 0;
 		 float Radius;
 		 int Movement_type = 1;
 		

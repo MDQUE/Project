@@ -75,6 +75,10 @@ void gcode::set_Line_Number(int Number){
 	Line_Number = Number;
 }
 
+bool gcode::get_Pen_Position(){
+	return Pen_down;
+}
+
 
 
 
