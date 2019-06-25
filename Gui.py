@@ -31,13 +31,13 @@ class MyWindow(Gtk.Window):
 		grid = Gtk.Grid()
 		self.add(grid)
 		
-		Treeview_placeholder = Gtk.Box(spacing = 3)
+		self.Code_Box = Gtk.ListBox()
 		listbox = Gtk.ListBox()
 		listbox.set_selection_mode(Gtk.SelectionMode.NONE)
 		Codeprocess_placeholder = Gtk.Box(spacing = 3)
 		Answer_placeholder = Gtk.Box(spacing = 3)
 		
-		grid.attach(Treeview_placeholder, 0, 0, 2, 2)
+		grid.attach(self.Code_Box, 0, 0, 2, 2)
 		grid.attach(listbox, 2, 0 , 1, 1)
 		grid.attach(Codeprocess_placeholder, 0, 2, 2, 1 )
 		grid.attach(Answer_placeholder, 2, 1, 2, 2)
@@ -74,6 +74,17 @@ class MyWindow(Gtk.Window):
 		if response == Gtk.ResponseType.OK:
 				print("Open clicked")
 				print("File selected: " + dialog.get_filename())
+				path = dialog.get_filename()
+				data = open(path, "r")
+				for row in data:
+					rower = Gtk.ListBoxRow()
+					linelabel = Gtk.Label(row)
+					linelabel.set_property("height-request", 5)
+					linelabel.set_xalign(0)
+					rower.add(linelabel)
+					rower.set_activatable(False)
+					self.Code_Box.add(rower)
+				self.Code_Box.show_all();
 		elif response == Gtk.ResponseType.CANCEL:
 				print("Cancel clicked")
 		dialog.destroy()
