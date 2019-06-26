@@ -29,6 +29,7 @@
 #define SPEED 200	//speed of the plotter
 #define WASD_STEPS	1000	//set steps for wasd-control
 #define MSQSIZE 10
+#define Fuck_off_and Code.MyInstructions[0]
 
 
 //make it chars?

@@ -63,25 +63,25 @@ private:
 		unsigned int Calculate_Line(float MovementX, float MovementY);
 		
 		
-		 float Drawlimit_X1;
-		 float Drawlimit_Y1;
-		 float Drawlimit_X2;
-		 float Drawlimit_Y2;
-		 float Ref_point_RX1;
-		 float Ref_point_RY1;
+		 float Drawlimit_X1 = 0;
+		 float Drawlimit_Y1 = 0;
+		 float Drawlimit_X2 = 0;
+		 float Drawlimit_Y2 = 0;
+		 float Ref_point_RX1 = 0;
+		 float Ref_point_RY1 = 0;
 		 float Move_RES;
 		 bool Absolute_Coordinates = 1;
 		 int Travel_Speed = 30;
 		
 		// Measured From Reference Point
-		 float Last_Pos_X;
-		 float Last_Pos_Y;
+		 float Last_Pos_X = 0;
+		 float Last_Pos_Y = 0;
 		 
-		 int Actual_Line_Number;
+		 int Actual_Line_Number = 0;
 		 bool Program_End = 0;
 		 float MoveX = 0;
 		 float MoveY = 0;
-		 float Radius;
+		 float Radius = 0;
 		 int Movement_type = 1;
 		
 		

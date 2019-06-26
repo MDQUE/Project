@@ -29,21 +29,14 @@ int main(void){
 	spi_init();
 	Endstops.clear(0x7fffffff);
 	thread_control_mutex.lock();
-
-	
-	//endstop_up.rise(Endstop1_reached);
-	//endstop_up.fall(Endstop1_left);
-	//endstop_down.rise(Endstop2_reached);
-	//endstop_down.fall(Endstop2_left);
-	//endstop_right.rise(Endstop3_reached);
-	//endstop_right.fall(Endstop3_left);
-	//endstop_left.rise(Endstop4_reached);
-	//endstop_left.fall(Endstop4_left);
 	
 
 	uart.printf("Main start\n");
-
-	Move_enable();
+/*
+for(int i = 0; i < 200; i++){
+	plotter_move(0x08);
+}
+*/	//Move_enable();
 
 	Thread_com.start(com_Thread);
 	Thread_int.start(int_Thread);
@@ -163,22 +156,23 @@ void plotter_move(char direction){
 
 	//check if an endpoint is active and set flags accordingly before making a step
 	//check_endstops();
-
+	uart.printf("flags: %h\n", Endstops.get());
 	//if move is enabled
-	if((0x10 & endstop_flags) == 0x10){
+	if((0x00000010 & Endstops.get()) == 0x00000010){
+
 
 		//up 0x02 endstop 1
-		if( ((direction & 0x02) == 0x02) /*&& ((0x00000001 & endstop_flags) == 0x01)*/ ){
+		if( ((direction & 0x02) == 0x02) && ((direction & 0x03) != 0x03)){
 			plotter_single_move(0x02);
 		}
 
 		//down 0x03 endstop 2
 		if( ((direction & 0x03) == 0x03) /*&& ((0x00000002 & endstop_flags) == 0x02)*/ ){
 			plotter_single_move(0x03);
-		}
+		} 
 
 		//left 0x08 endstop 4
-		if( ((direction & 0x08) == 0x08)/* && ((0x00000004 & endstop_flags) == 0x04) */){
+		if( ((direction & 0x08) == 0x08) && ((direction & 0x0C) != 0x0C)){
 			plotter_single_move(0x08);
 		}
 
@@ -190,6 +184,7 @@ void plotter_move(char direction){
 	}
 		
 }
+
 void plotter_single_move(char direction){
 
 	//uart.printf("plotter-single-move dir: %d\n", direction);
@@ -200,7 +195,7 @@ void plotter_single_move(char direction){
 	//led2.write(1); 4
 	spi.write(0x40); //device optcode  //bit0 -> 0 write/1 read             //0100 0000
 	spi.write(0x09); //adress of register (GPIO port register 0x09)         //0000 1001
-	spi.write(direction); //data to write to register                       //0000 0000
+	spi.write((int)direction); //data to write to register                       //0000 0000
 
 	cs = 1;     	//set SPI bus high for no communication
 	wait_us(SPEED);	//speed of the plotter
@@ -325,6 +320,7 @@ void int_Thread(){
 	}
 */	
 		thread_control_mutex.lock();
+//		plotter_reset();
 		uart.printf("int got lock\n");
 	//get line from msgq and pop it
 	//string newline = msgreceiver();
@@ -336,9 +332,9 @@ void int_Thread(){
 		Code.set_Resolution(0.023);
 
 	// Translate a Line of Instruction
-		Code.translate("G01 X100");
-		Code.translate("G01 Y100");
-		Code.translate("G01 X100");
+		Code.translate("N100 G01 X10");
+		Code.translate("N110 G01 Y-10");
+		Code.translate("N120 G01 X10");
 
 		uart.printf("int translated\n");
 		uart.printf("int gives lock back\n");
@@ -417,15 +413,15 @@ void int_Thread(){
 						plotter_diagnal(stepsX, directionX, stepsY, directionY);
 
 				} else {
-					if(Code.MyInstructions[0].get_dirX_Active()){
+					if(Fuck_off_and.get_dirX_Active()){
 						uart.printf("Its a x-line! steps: %d dir: %d\n", stepsX, directionX);
 						for(int i = 0; i < stepsX; i++){
 							//uart.printf(" i: %d\n");
-							plotter_move(0x0C);
+							plotter_single_move(directionX);
 						}
 						uart.printf("done drawing x-line\n");
 					}
-					if(Code.MyInstructions[0].get_dirX_Active()){
+					if(Fuck_off_and.get_dirY_Active()){
 						for(int i = 0; i < stepsY; i++){
 							uart.printf("Its a y-line!\n");
 							plotter_single_move(directionY);
