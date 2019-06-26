@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cmath>
 #include <queue>
+#include <thread>
 
 //own includes
 #include <gcode.h>
@@ -29,11 +30,39 @@
 #define WASD_STEPS	1000	//set steps for wasd-control
 #define MSQSIZE 10
 
-#define right	0x0C
-#define left	0x08
-#define down	0x03
-#define up	    0x02
+
+//make it chars?
+#define right	0x0C	//12
+#define left	0x08	//8
+#define down	0x03	//3
+#define up	    0x02	//2
 /******************************************************************** init pins**************************************** */
+
+
+void spi_init(void);
+void endstop_counter(void);
+void sendmsg(string msg);
+void int_Thread();
+void com_Thread();
+void plotter_reset();
+void plotter_move(char direction);
+void plotter_single_move(char direction);
+void plotter_line(int steps, int direction);
+void plotter_diagnal(int x_steps, int x_dir, int y_steps, int y_dir);
+void Endstop1_reached(void);
+void Endstop2_reached(void);
+void Endstop3_reached(void);
+void Endstop4_reached(void);
+void Endstop1_left(void);
+void Endstop2_left(void);
+void Endstop3_left(void);
+void Endstop4_left(void);
+void Move_enable(void);
+void Move_disable(void);
+void int_enable(void);
+void int_disable(void);
+void draw_Thread(gci::gcode& gcode_object);
+
 
 //structs
 typedef struct {
@@ -61,40 +90,36 @@ DigitalOut led1(LED1);      //P1_1
 DigitalOut led2(LED2);      //P1_0
 
 //endstops
-InterruptIn endstop_up(P1_15);      //endstop 1
-InterruptIn endstop_down(P1_13);    //endstop 2
-InterruptIn endstop_right(P1_12);   //endstop 3
-InterruptIn endstop_left(P1_14);    //endstop 4
-
-//msgqueue
-Queue <string, MSQSIZE>  com_msgqueue;
+DigitalIn endstop_up(P1_15);      //endstop 1
+DigitalIn endstop_down(P1_13);    //endstop 2
+DigitalIn endstop_right(P1_12);   //endstop 3
+DigitalIn endstop_left(P1_14);    //endstop 4
 
 //Event Flags
 EventFlags Endstops;
 
 
+
+//msgqueue
+Queue <string, MSQSIZE>  com_msgqueue;
+
+//mutex
+Mutex thread_control_mutex;
+
+//THREADS
+Thread Thread_com;
+Thread Thread_int;
+Thread Message_handout;
+Thread Thread_draw;
+
+
 MemoryPool <msgpointer, 16> mpool;
 Queue <msgpointer, 16> msg_queue;
 
+
 //function declarations;
 
-void spi_init(void);
-void endstop_counter(void);
-void sendmsg(string msg);
-void int_Thread();
-void com_Thread();
-void plotter_reset();
-void plotter_move(unsigned int move);
-void plotter_line(int steps, int direction);
-void plotter_diagnal(int x_steps, int x_dir, int y_steps, int y_dir);
-void Endstop1_reached(void);
-void Endstop2_reached(void);
-void Endstop3_reached(void);
-void Endstop4_reached(void);
-void Endstop1_left(void);
-void Endstop2_left(void);
-void Endstop3_left(void);
-void Endstop4_left(void);
+
 
 
 
