@@ -320,8 +320,8 @@ void int_Thread(){
 	}
 */	
 		thread_control_mutex.lock();
-		plotter_reset();
 		uart.printf("int got lock\n");
+		
 	//get line from msgq and pop it
 	//string newline = msgreceiver();
 
@@ -336,9 +336,11 @@ void int_Thread(){
 		Code.translate("G01 Y10");
 		Code.translate("G01 X10");
 
+		//plotter_reset();
 		uart.printf("int translated\n");
 		uart.printf("int gives lock back\n");
 		thread_control_mutex.unlock();
+
 	
 	while(1){
 		thread_control_mutex.lock();
@@ -367,7 +369,7 @@ void int_Thread(){
 
 					//has stepsX steps
 					stepsX = Code.MyInstructions[0].get_StepsX();
-
+b32
 					if(Code.MyInstructions[0].get_dirX_Orientation()){
 						//direction is left
 						directionX = 0x08;

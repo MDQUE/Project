@@ -73,6 +73,8 @@ typedef struct {
 //mbed_os - drivers PwmOut
 PwmOut pwm_signal(P1_3);   // CCU4 P1.3    //CCU8 P0.3
 
+
+Serial uart(P0_1, P0_0,9600);   //rdx, tdx, baudrate
 //create class object SPI
 //initialise mosi, miso, clk, cs
 //mbed os - drivers - spi.h
@@ -81,7 +83,6 @@ DigitalOut cs(P1_2);    		//IO_cs
 
 //init serial
 //mbed os - drivers - serial.h
-Serial uart(P0_1, P0_0,9600);   //rdx, tdx, baudrate
 
 //targets/TARGET_Infineon/TARGET_XMC4XXX/TARGET_XMC4500/PinNames.h
 DigitalIn button1(SW1);		//P1_14
