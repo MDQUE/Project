@@ -320,7 +320,7 @@ void int_Thread(){
 	}
 */	
 		thread_control_mutex.lock();
-		plotter_reset();
+//		plotter_reset();
 		uart.printf("int got lock\n");
 	//get line from msgq and pop it
 	//string newline = msgreceiver();
@@ -332,9 +332,9 @@ void int_Thread(){
 		Code.set_Resolution(0.023);
 
 	// Translate a Line of Instruction
-		Code.translate("G01 X10");
-		Code.translate("G01 Y10");
-		Code.translate("G01 X10");
+		Code.translate("N100 G01 X10");
+		Code.translate("N110 G01 Y-10");
+		Code.translate("N120 G01 X10");
 
 		uart.printf("int translated\n");
 		uart.printf("int gives lock back\n");
@@ -413,7 +413,7 @@ void int_Thread(){
 						plotter_diagnal(stepsX, directionX, stepsY, directionY);
 
 				} else {
-					if(Code.MyInstructions[0].get_dirX_Active()){
+					if(Fuck_off_and.get_dirX_Active()){
 						uart.printf("Its a x-line! steps: %d dir: %d\n", stepsX, directionX);
 						for(int i = 0; i < stepsX; i++){
 							//uart.printf(" i: %d\n");
@@ -421,7 +421,7 @@ void int_Thread(){
 						}
 						uart.printf("done drawing x-line\n");
 					}
-					if(Code.MyInstructions[0].get_dirX_Active()){
+					if(Fuck_off_and.get_dirY_Active()){
 						for(int i = 0; i < stepsY; i++){
 							uart.printf("Its a y-line!\n");
 							plotter_single_move(directionY);
