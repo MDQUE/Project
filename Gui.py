@@ -32,8 +32,17 @@ class MyWindow(Gtk.Window):
 		self.add(grid)
 		
 		self.Code_Box = Gtk.ListBox()
-		listbox = Gtk.ListBox()
-		listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+		listbox = Gtk.Grid()
+		mainlable1 = Gtk.Label("Code exec")
+		mainlable2 = Gtk.Label("Manual drive")
+		Load_code = Gtk.Button(label= "Run Code")
+		Manual_button = Gtk.Button(label= "x")
+		Manual_button.connect("clicked", self.manual_drive)
+		listbox.attach(mainlable1, 0, 0, 1, 1)
+		listbox.attach(mainlable2, 0, 1, 1, 1)
+		listbox.attach(Manual_button, 1, 1, 1, 1)
+		listbox.attach(Load_code, 0, 2, 2, 1)
+		
 		Codeprocess_placeholder = Gtk.Box(spacing = 3)
 		Answer_placeholder = Gtk.Box(spacing = 3)
 		
@@ -58,6 +67,13 @@ class MyWindow(Gtk.Window):
 		win2.connect("destroy", Gtk.main_quit)
 		win2.show_all()
 		Gtk.main()
+		
+
+	def manual_drive(self,widget):
+		win3 = Manual_window();
+		win3.connect("destroy", Gtk.main_quit)
+		win3.show_all()
+		Gtk.main()
 
 
 
@@ -76,6 +92,7 @@ class MyWindow(Gtk.Window):
 				print("File selected: " + dialog.get_filename())
 				path = dialog.get_filename()
 				data = open(path, "r")
+				i = 0;
 				for row in data:
 					rower = Gtk.ListBoxRow()
 					linelabel = Gtk.Label(row)
@@ -84,6 +101,9 @@ class MyWindow(Gtk.Window):
 					rower.add(linelabel)
 					rower.set_activatable(False)
 					self.Code_Box.add(rower)
+					i+= 1
+					if (i > 6):
+						break
 				self.Code_Box.show_all();
 		elif response == Gtk.ResponseType.CANCEL:
 				print("Cancel clicked")
